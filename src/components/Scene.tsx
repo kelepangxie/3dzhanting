@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
+import { Sky } from '@react-three/drei'
 import PlayerControls from './PlayerControls'
 import TouchCameraRig from './TouchCameraRig'
 import TourCameraRig from './TourCameraRig'
@@ -17,13 +18,14 @@ export default function Scene() {
   return (
     <Canvas
       shadows
-      camera={{ fov: 72, near: 0.1, far: 120, position: [0, HALL.EYE_HEIGHT, 6.2] }}
+      camera={{ fov: 72, near: 0.1, far: 1000, position: [0, HALL.EYE_HEIGHT, 6.2] }}
       gl={{ antialias: true, toneMapping: 3, toneMappingExposure: 1.12 }}
       dpr={[1, isTouch ? 1.5 : 2]}
       style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
     >
-      <color attach="background" args={[PASTORAL.sky]} />
-      <fog attach="fog" args={[PASTORAL.sky, 22, 46]} />
+      {/* 真实天空：透过穹顶天窗与入口门洞可见 */}
+      <Sky distance={800} sunPosition={[60, 120, 40]} turbidity={5} rayleigh={1.6} mieCoefficient={0.004} mieDirectionalG={0.85} />
+      <fog attach="fog" args={[PASTORAL.sky, 26, 90]} />
 
       {/* 柔和天光：上暖下绿的环境光，营造天窗洒光的明亮氛围 */}
       <hemisphereLight args={['#FBFDF4', PASTORAL.grassDark, 1.05]} />

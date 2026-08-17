@@ -274,7 +274,7 @@ function PlantPot({ position, variant = 0 }: { position: [number, number, number
 
 /* ---------------- 田园大树（树干 + 团状树冠 + 果实点缀） ---------------- */
 
-function BigTree({
+export function BigTree({
   position,
   scale = 1,
   variant = 0,
@@ -402,7 +402,7 @@ function Mushroom({
   )
 }
 
-function MushroomCluster({ position }: { position: [number, number, number] }) {
+export function MushroomCluster({ position }: { position: [number, number, number] }) {
   return (
     <group position={position}>
       <Mushroom position={[0, 0, 0]} scale={1.15} red tilt={0.05} />
@@ -421,7 +421,7 @@ function MushroomCluster({ position }: { position: [number, number, number] }) {
 
 /* ---------------- 灌木与小花 ---------------- */
 
-function Bush({ position, scale = 1 }: { position: [number, number, number]; scale?: number }) {
+export function Bush({ position, scale = 1 }: { position: [number, number, number]; scale?: number }) {
   return (
     <group position={position} scale={scale}>
       <mesh position={[0, 0.3, 0]} castShadow>
@@ -671,11 +671,6 @@ export default function Decorations({ exhibits }: { exhibits: Exhibit[] }) {
           <BigTree position={hallPoint(19, 0.86, 0)} variant={2} shadow scale={0.92} />
           <BigTree position={hallPoint(-161, 0.86, 0)} variant={3} shadow scale={1.08} />
 
-          {/* 门外树林：透过拱形门洞看到森林环绕 */}
-          <BigTree position={[-4.5, 0, 9.2]} variant={4} scale={1.18} />
-          <BigTree position={[4.8, 0, 8.9]} variant={5} scale={1.12} />
-          <BigTree position={[0, 0, 9.8]} variant={6} scale={1.25} />
-
           {/* 童话蘑菇丛：树脚 + 门侧 + 展品间隙 */}
           <MushroomCluster position={hallPoint(172, 0.78, 0)} />
           <MushroomCluster position={hallPoint(14, 0.78, 0)} />
@@ -701,10 +696,10 @@ export default function Decorations({ exhibits }: { exhibits: Exhibit[] }) {
           <TreeStump position={[6.5, 0, -2.3]} />
           <TreeStump position={[9.3, 0, 3.4]} rotationY={1.2} />
 
-          {/* 萤火虫光点：树冠与门洞附近漂浮 */}
+          {/* 萤火虫光点：树冠与门外小径附近漂浮 */}
           <Fireflies center={hallPoint(167, 0.86, 2.2)} count={10} />
           <Fireflies center={hallPoint(-161, 0.86, 2.2)} count={10} />
-          <Fireflies center={[0, 2.2, 9.4]} count={8} radius={2.6} />
+          <Fireflies center={[0, 2, 12]} count={8} radius={2.6} />
         </>
       )}
 

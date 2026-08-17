@@ -57,10 +57,38 @@ export function hallPoint(thetaDeg: number, radialFactor = 1, y = 0): [number, n
   return [Math.cos(t) * HALL.RX * w * radialFactor, y, Math.sin(t) * HALL.RZ * w * radialFactor]
 }
 
-/** 贴墙平面朝向圆心所需的 rotationY */
+/** 墙面起伏的一阶导数（供法线计算） */
+function wallWobbleDeriv(t: number): number {
+  return 0.056 * Math.cos(2 * t + 1.2) + 0.08 * Math.cos(5 * t + 0.4)
+}
+
+/**
+ * 洞穴墙在角度 t 处的外法线（含起伏的一阶修正）。
+ * 注意：椭圆墙面真法线 ≠ 径向方向，象限中部两者可差近 20°，
+ * 按径向摆放的画框会一侧斜插进墙体。
+ */
+export function wallOutwardNormal(t: number): [number, number] {
+  const w = wallWobble(t)
+  const dw = wallWobbleDeriv(t)
+  const dx = HALL.RX * (-Math.sin(t) * w + Math.cos(t) * dw)
+  const dz = HALL.RZ * (Math.cos(t) * w + Math.sin(t) * dw)
+  const len = Math.hypot(dx, dz) || 1
+  return [dz / len, -dx / len]
+}
+
+/** 墙面在角度 thetaDeg、高度 y 处的表面点 (x, z)，与 GalleryRoom 墙体几何一致（含顶部内收 lean） */
+export function wallSurfacePoint(thetaDeg: number, y: number): [number, number] {
+  const t = (thetaDeg * Math.PI) / 180
+  const w = wallWobble(t)
+  const shrink = 1 - 0.035 * (y / HALL.HEIGHT) ** 2
+  return [Math.cos(t) * HALL.RX * w * shrink, Math.sin(t) * HALL.RZ * w * shrink]
+}
+
+/** 贴墙平面朝向圆心所需的 rotationY（按椭圆真法线，而非径向） */
 export function hallFacing(thetaDeg: number): number {
   const t = (thetaDeg * Math.PI) / 180
-  return Math.atan2(-Math.cos(t), -Math.sin(t))
+  const [nx, nz] = wallOutwardNormal(t)
+  return Math.atan2(-nx, -nz)
 }
 
 /** 把行走位置钳制在椭圆展厅内（含离墙安全距离） */

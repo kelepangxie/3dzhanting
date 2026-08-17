@@ -1,12 +1,14 @@
 import { useMemo } from 'react'
 import * as THREE from 'three'
+import { Instances, Instance } from '@react-three/drei'
 import useExhibitStore from '@/store/useExhibitStore'
 import type { FloorStyle } from '@/store/useExhibitStore'
+import { BigTree, MushroomCluster, Bush } from './Decorations'
 import { PASTORAL, HALL, wallWobble, SCHOOL, CANVAS_SERIF, CANVAS_SANS } from '@/theme'
 
 /* ---------------- 程序纹理：地面 ---------------- */
 
-function createFloorTexture(style: FloorStyle) {
+function createFloorTexture(style: FloorStyle, repeat: [number, number] = [9, 6]) {
   const canvas = document.createElement('canvas')
   canvas.width = 512
   canvas.height = 512
@@ -108,10 +110,12 @@ function createFloorTexture(style: FloorStyle) {
   const texture = new THREE.CanvasTexture(canvas)
   texture.wrapS = THREE.RepeatWrapping
   texture.wrapT = THREE.RepeatWrapping
-  texture.repeat.set(9, 6)
+  texture.repeat.set(repeat[0], repeat[1])
   texture.colorSpace = THREE.SRGBColorSpace
   return texture
 }
+
+/* ---------------- 程序纹理：墙面 ---------------- */
 
 function createWallTexture(wallColor: string) {
   const canvas = document.createElement('canvas')
@@ -317,8 +321,11 @@ export default function GalleryRoom() {
         <meshStandardMaterial color={decorations.wallColor} roughness={0.95} metalness={0} side={THREE.DoubleSide} />
       </mesh>
 
-      {/* 天窗：天空圆盘 + 柔光光柱 */}
+      {/* 天窗：直接透出 Scene 里的真实天空 */}
       <Oculus />
+
+      {/* 户外世界：草坪、土路、森林（天空由 Scene 的 Sky 提供） */}
+      <OutdoorWorld />
 
       {/* 悬挂横幅：入口内侧左右两幅，从穹顶垂下 */}
       <HangingBanner position={[-2.6, HALL.HEIGHT - 0.9, 5.6]} rotationY={Math.PI} texture={titleTexture} height={2.6} />
@@ -333,13 +340,9 @@ export default function GalleryRoom() {
 /* ---------------- 天窗 ---------------- */
 
 function Oculus() {
+  // 天窗里直接看到真实天空（Scene 中的 Sky），不再放假的天空盘
   return (
     <group position={[0, 0, 0]}>
-      {/* 天空盘（天窗里看到的天空） */}
-      <mesh position={[0, HALL.HEIGHT + HALL.DOME - 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[HALL.OCULUS * 0.98, 48]} />
-        <meshBasicMaterial color="#FBFDF4" />
-      </mesh>
       {/* 柔光光柱：从天窗洒向地面 */}
       <mesh position={[0, HALL.HEIGHT * 0.52, 0]}>
         <cylinderGeometry args={[HALL.OCULUS * 0.55, HALL.OCULUS * 1.05, HALL.HEIGHT * 0.96, 40, 1, true]} />
@@ -363,6 +366,88 @@ function Oculus() {
         color="#FFFDF0"
         target-position={[0, 0, 0]}
       />
+    </group>
+  )
+}
+
+/* ---------------- 户外世界：天空下的草坪、土路与森林 ---------------- */
+
+function OutdoorWorld() {
+  const outerGrass = useMemo(() => createFloorTexture('grass', [96, 96]), [])
+  const pathTexture = useMemo(() => createFloorTexture('rammed', [2, 9]), [])
+
+  // 森林树环：确定性伪随机分布，避开展厅与门口观景走廊
+  const trees = useMemo(() => {
+    const rand = (n: number) => {
+      const x = Math.sin(n * 127.1 + 311.7) * 43758.5453
+      return x - Math.floor(x)
+    }
+    const list: { x: number; z: number; s: number; tone: number }[] = []
+    for (let i = 0; i < 70; i++) {
+      const a = rand(i * 2 + 1) * Math.PI * 2
+      let r = 16 + rand(i * 2 + 2) * 24
+      const x0 = Math.cos(a) * r
+      const z0 = Math.sin(a) * r
+      // 入口（+Z）方向的观景走廊近处留空，把树推远
+      if (Math.abs(x0) < 5.5 && z0 > 6 && r < 27) r = 27 + rand(i * 2 + 3) * 9
+      list.push({ x: Math.cos(a) * r, z: Math.sin(a) * r, s: 0.85 + rand(i * 2 + 4) * 0.55, tone: rand(i * 2 + 5) })
+    }
+    return list
+  }, [])
+
+  return (
+    <group>
+      {/* 外圈大草坪（延伸进雾里，与天空相接） */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]}>
+        <circleGeometry args={[120, 72]} />
+        <meshStandardMaterial map={outerGrass} roughness={0.95} metalness={0.02} />
+      </mesh>
+
+      {/* 门口夯土小路，通向森林 */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, 17.4]}>
+        <planeGeometry args={[3.4, 18]} />
+        <meshStandardMaterial map={pathTexture} roughness={0.9} metalness={0} />
+      </mesh>
+
+      {/* 近景大树：路两侧迎客 */}
+      <BigTree position={[-4.3, 0, 10.8]} variant={4} scale={1.15} />
+      <BigTree position={[4.0, 0, 12.0]} variant={5} scale={1.05} />
+      <BigTree position={[-7.4, 0, 14.0]} variant={6} scale={1.25} />
+      <BigTree position={[7.6, 0, 15.2]} variant={7} scale={1.1} />
+
+      {/* 路边蘑菇与灌木 */}
+      <MushroomCluster position={[1.85, 0, 11.2]} />
+      <MushroomCluster position={[-2.2, 0, 13.4]} />
+      <Bush position={[3.4, 0, 9.8]} />
+      <Bush position={[-3.8, 0, 10.6]} scale={1.15} />
+
+      {/* 森林树环（实例化渲染，仅几个 draw call） */}
+      <Instances limit={80}>
+        <cylinderGeometry args={[0.14, 0.22, 2.6, 7]} />
+        <meshStandardMaterial color={PASTORAL.woodDark} roughness={0.9} metalness={0} />
+        {trees.map((t, i) => (
+          <Instance key={i} position={[t.x, 1.3 * t.s, t.z]} scale={t.s} />
+        ))}
+      </Instances>
+      <Instances limit={220}>
+        <sphereGeometry args={[1.15, 10, 10]} />
+        <meshStandardMaterial roughness={0.95} metalness={0} />
+        {trees.flatMap((t, i) =>
+          [0, 1, 2].map((k) => {
+            const s = t.s * (1.25 - k * 0.22)
+            const color =
+              k === 0 ? PASTORAL.fieldDark : k === 1 ? (t.tone > 0.5 ? PASTORAL.field : PASTORAL.grassDark) : PASTORAL.fieldLight
+            return (
+              <Instance
+                key={`${i}-${k}`}
+                position={[t.x + (k - 1) * 0.75 * t.s, (3.1 + k * 0.85) * t.s, t.z + ((k % 2) - 0.5) * 0.8 * t.s]}
+                scale={[s, s * 0.92, s]}
+                color={color}
+              />
+            )
+          }),
+        )}
+      </Instances>
     </group>
   )
 }

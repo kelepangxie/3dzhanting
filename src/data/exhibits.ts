@@ -1,4 +1,4 @@
-import { hallPoint, hallFacing, HALL } from '@/theme'
+import { HALL, wallOutwardNormal, wallSurfacePoint } from '@/theme'
 
 export interface Exhibit {
   id: string
@@ -21,12 +21,41 @@ export interface Exhibit {
  * 椭圆曲面展厅布展：展品沿弧形白墙环形排布，画面朝向圆心。
  * thetaDeg：0°=+X，90°=+Z（入口方向）。入口缺口约 76°~104°，此区间不布展
  * （画框悬在无墙的门洞里会与拱门立柱穿插，务必避开）。
- * radialFactor 0.965 让画面微微悬浮于弧墙之前（洞穴内嵌展板效果）。
+ *
+ * 摆放算法：画框按墙面「真法线」定向（径向会在象限中部斜插进墙），
+ * 再对展板跨度内的墙面（含顶部内收）数值采样，求出保证整幅画框
+ * 完整悬浮于墙前的最小离墙间距。
  */
-function wallSlot(thetaDeg: number, tall: boolean) {
-  // 竖幅画框高、更接近内收的穹顶，离墙稍远；横幅可以更贴墙
-  const [x, , z] = hallPoint(thetaDeg, tall ? 0.972 : 0.976, 0)
-  return { x, z, rotationY: hallFacing(thetaDeg) }
+const FRAME_BACK = 0.062 // 画框背板凸出画面的深度
+const FRAME_GAP = 0.05 // 画框背板与墙面的最小间隙
+
+function wallSlot(thetaDeg: number, tall: boolean, halfWidth: number, halfHeight: number) {
+  const y = tall ? HALL.EYE_HEIGHT + 0.58 : HALL.EYE_HEIGHT + 0.15
+  const t = (thetaDeg * Math.PI) / 180
+  const [nx, nz] = wallOutwardNormal(t)
+  const [cx, cz] = wallSurfacePoint(thetaDeg, y)
+
+  // 采样展板跨度（角度）× 高度（中心/顶部）内的墙面，求相对切平面的最大内凸量
+  const baseR = Math.hypot(cx, cz)
+  const halfThetaDeg = ((halfWidth / baseR + 0.03) * 180) / Math.PI
+  let protrusion = 0
+  for (const hSign of [0, 1]) {
+    const sy = y + hSign * halfHeight
+    for (let i = 1; i <= 10; i++) {
+      for (const sign of [-1, 1]) {
+        const [px, pz] = wallSurfacePoint(thetaDeg + (sign * halfThetaDeg * i) / 10, sy)
+        const d = (px - cx) * nx + (pz - cz) * nz // >0 墙在切平面外侧（安全），<0 内凸
+        protrusion = Math.min(protrusion, d)
+      }
+    }
+  }
+
+  const offset = FRAME_BACK + Math.max(0, -protrusion) + FRAME_GAP
+  return {
+    x: cx - nx * offset,
+    z: cz - nz * offset,
+    rotationY: Math.atan2(-nx, -nz),
+  }
 }
 
 // 广西农业职业技术大学 · 人文与艺术学院 · 视觉传达设计
@@ -221,7 +250,7 @@ const seeds: Seed[] = [
 
 const exhibits: Exhibit[] = seeds.map((seed) => {
   const tall = seed.height > 2
-  const slot = wallSlot(seed.thetaDeg, tall)
+  const slot = wallSlot(seed.thetaDeg, tall, seed.width / 2, seed.height / 2)
   return {
     ...seed,
     position: { x: slot.x, y: tall ? HALL.EYE_HEIGHT + 0.58 : HALL.EYE_HEIGHT + 0.15, z: slot.z },
