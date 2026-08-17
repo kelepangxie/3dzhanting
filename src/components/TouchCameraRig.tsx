@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import useExhibitStore from '@/store/useExhibitStore'
 import { playerInput, resetPlayerInput } from '@/lib/playerInput'
-import { ROOM } from '@/theme'
+import { clampToHall, HALL } from '@/theme'
 
 const MOVE_SPEED = 3.6
 const DAMPING = 10
@@ -48,13 +48,12 @@ export default function TouchCameraRig() {
     velocity.current.lerp(targetVel, 1 - Math.exp(-DAMPING * delta))
 
     const newPos = camera.position.clone().addScaledVector(velocity.current, delta)
-    newPos.y = ROOM.EYE_HEIGHT
+    newPos.y = HALL.EYE_HEIGHT
 
-    const margin = ROOM.WALL_MARGIN
-    const halfW = ROOM.WIDTH / 2 - margin
-    const halfD = ROOM.DEPTH / 2 - margin
-    newPos.x = Math.max(-halfW, Math.min(halfW, newPos.x))
-    newPos.z = Math.max(-halfD, Math.min(halfD, newPos.z))
+    // 椭圆展厅行走边界（离墙安全距离）
+    const [cx, cz] = clampToHall(newPos.x, newPos.z)
+    newPos.x = cx
+    newPos.z = cz
 
     camera.position.copy(newPos)
   })

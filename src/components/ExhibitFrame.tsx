@@ -232,10 +232,10 @@ export default function ExhibitFrame({ exhibit }: { exhibit: Exhibit }) {
       <spotLight
         ref={spotlightRef}
         position={[0, 2.5, 1.5]}
-        angle={0.4}
-        penumbra={0.6}
-        intensity={hovered ? 2 : 1.1}
-        color="#FFF6E0"
+        angle={0.55}
+        penumbra={0.85}
+        intensity={hovered ? 1.6 : 0.85}
+        color="#FFF9EA"
         castShadow={false}
       />
     </group>

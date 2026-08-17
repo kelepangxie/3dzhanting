@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
 import { PointerLockControls } from '@react-three/drei'
 import useExhibitStore from '@/store/useExhibitStore'
-import { ROOM } from '@/theme'
+import { clampToHall, HALL } from '@/theme'
 
 const MOVE_SPEED = 4
 const DAMPING = 8
@@ -13,10 +13,19 @@ export default function PlayerControls() {
   const velocity = useRef(new THREE.Vector3())
   const direction = useRef(new THREE.Vector3())
   const keys = useRef<Record<string, boolean>>({})
-  const { setLocked } = useExhibitStore()
+  const { setLocked, selectedExhibit } = useExhibitStore()
+  const isLocked = useExhibitStore((s) => s.isLocked)
 
   const handleLock = useCallback(() => setLocked(true), [setLocked])
   const handleUnlock = useCallback(() => setLocked(false), [setLocked])
+
+  // 打开展品详情时真正退出浏览器指针锁定（仅改 store 状态不会释放光标，鼠标会“卡死”）
+  useEffect(() => {
+    if (selectedExhibit && document.pointerLockElement) {
+      document.exitPointerLock()
+      controlsRef.current?.unlock?.()
+    }
+  }, [selectedExhibit])
 
   // 通过自定义事件触发锁定，而不是 drei 默认的「任意点击 document 即锁定」——
   // 默认行为会把点击顶栏按钮也变成指针锁定，导致整个 UI 无法再点击。
@@ -53,6 +62,12 @@ export default function PlayerControls() {
   useFrame((state, delta) => {
     if (!controlsRef.current?.getObject()) return
 
+    // 未锁定（详情面板打开 / 未进入展厅）时不响应移动键，避免面板内切换展品时相机漂移
+    if (!isLocked) {
+      velocity.current.multiplyScalar(Math.max(0, 1 - DAMPING * delta))
+      return
+    }
+
     const camera = controlsRef.current.getObject()
     const k = keys.current
 
@@ -82,13 +97,12 @@ export default function PlayerControls() {
 
     const newPos = camera.position.clone()
     newPos.add(velocity.current.clone().multiplyScalar(delta))
-    newPos.y = ROOM.EYE_HEIGHT
+    newPos.y = HALL.EYE_HEIGHT
 
-    const margin = ROOM.WALL_MARGIN
-    const halfW = ROOM.WIDTH / 2 - margin
-    const halfD = ROOM.DEPTH / 2 - margin
-    newPos.x = Math.max(-halfW, Math.min(halfW, newPos.x))
-    newPos.z = Math.max(-halfD, Math.min(halfD, newPos.z))
+    // 椭圆展厅行走边界（离墙安全距离）
+    const [cx, cz] = clampToHall(newPos.x, newPos.z)
+    newPos.x = cx
+    newPos.z = cz
 
     camera.position.copy(newPos)
   })

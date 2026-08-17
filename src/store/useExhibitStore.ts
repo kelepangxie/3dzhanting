@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { Exhibit } from '@/data/exhibits'
 
-export type FloorStyle = 'wood' | 'stone' | 'rammed'
+export type FloorStyle = 'grass' | 'wood' | 'stone' | 'rammed'
 export type ControlMode = 'walk' | 'tour'
 
 export interface TourTarget {
@@ -56,7 +56,7 @@ const defaultDecorations: DecorationState = {
   showPlants: true,
   showInfoStands: false,
   wallColor: '#F6F2E7',
-  floorStyle: 'wood',
+  floorStyle: 'grass',
   entranceText: '八桂采鲜·亲子同欢\n刀马组创意海报展',
 }
 

@@ -49,13 +49,14 @@ function MediaArea({ exhibit }: { exhibit: Exhibit }) {
 }
 
 export default function InfoPanel() {
-  const { selectedExhibit, selectExhibit, setLocked } = useExhibitStore()
+  const { selectedExhibit, selectExhibit } = useExhibitStore()
 
+  // 详情打开时释放浏览器指针锁定，让光标回来可点击面板按钮
   useEffect(() => {
-    if (selectedExhibit) {
-      setLocked(false)
+    if (selectedExhibit && document.pointerLockElement) {
+      document.exitPointerLock()
     }
-  }, [selectedExhibit, setLocked])
+  }, [selectedExhibit])
 
   const index = selectedExhibit ? exhibits.findIndex((e) => e.id === selectedExhibit.id) : -1
 

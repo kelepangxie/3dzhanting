@@ -1,3 +1,5 @@
+import { hallPoint, hallFacing, HALL } from '@/theme'
+
 export interface Exhibit {
   id: string
   title: string
@@ -15,10 +17,38 @@ export interface Exhibit {
   price?: string
 }
 
+/**
+ * 椭圆曲面展厅布展：展品沿弧形白墙环形排布，画面朝向圆心。
+ * thetaDeg：0°=+X，90°=+Z（入口方向）。入口缺口约 76°~104°，此区间不布展
+ * （画框悬在无墙的门洞里会与拱门立柱穿插，务必避开）。
+ * radialFactor 0.965 让画面微微悬浮于弧墙之前（洞穴内嵌展板效果）。
+ */
+function wallSlot(thetaDeg: number, tall: boolean) {
+  // 竖幅画框高、更接近内收的穹顶，离墙稍远；横幅可以更贴墙
+  const [x, , z] = hallPoint(thetaDeg, tall ? 0.972 : 0.976, 0)
+  return { x, z, rotationY: hallFacing(thetaDeg) }
+}
+
 // 广西农业职业技术大学 · 人文与艺术学院 · 视觉传达设计
 // 主题示例展品：结合广西农耕文化、非遗与乡村振兴设计课题。
 // 替换真实作品：把图片/视频放到 public/placeholders/ 下同名文件即可（见 README）。
-const exhibits: Exhibit[] = [
+
+interface Seed {
+  id: string
+  title: string
+  description: string
+  artist: string
+  category?: string
+  type: 'image' | 'video'
+  mediaUrl: string
+  thetaDeg: number
+  width: number
+  height: number
+  placeholderColor: string
+  price?: string
+}
+
+const seeds: Seed[] = [
   {
     id: 'exhibit-1',
     title: '八桂采鲜·亲子同欢',
@@ -28,8 +58,7 @@ const exhibits: Exhibit[] = [
     category: '海报设计',
     type: 'image',
     mediaUrl: '/exhibits/bagui-poster-1.jpg',
-    position: { x: -11.92, y: 2.2, z: -4.5 },
-    rotationY: Math.PI / 2,
+    thetaDeg: 152,
     width: 1.7,
     height: 2.4,
     placeholderColor: '#4C7A4E',
@@ -43,8 +72,7 @@ const exhibits: Exhibit[] = [
     category: '动态视觉',
     type: 'video',
     mediaUrl: '/placeholders/exhibit-2.mp4',
-    position: { x: -11.92, y: 2.2, z: -1.5 },
-    rotationY: Math.PI / 2,
+    thetaDeg: 122,
     width: 2.4,
     height: 1.6,
     placeholderColor: '#8A4A2F',
@@ -58,8 +86,7 @@ const exhibits: Exhibit[] = [
     category: '海报设计',
     type: 'image',
     mediaUrl: '/exhibits/bagui-poster-2.jpg',
-    position: { x: -11.92, y: 2.2, z: 1.5 },
-    rotationY: Math.PI / 2,
+    thetaDeg: 110,
     width: 1.7,
     height: 2.4,
     placeholderColor: '#2F5233',
@@ -73,8 +100,7 @@ const exhibits: Exhibit[] = [
     category: '数字艺术',
     type: 'video',
     mediaUrl: '/placeholders/exhibit-4.mp4',
-    position: { x: -11.92, y: 2.2, z: 4.5 },
-    rotationY: Math.PI / 2,
+    thetaDeg: 66,
     width: 2.4,
     height: 1.6,
     placeholderColor: '#8E4A5E',
@@ -88,8 +114,7 @@ const exhibits: Exhibit[] = [
     category: '海报设计',
     type: 'image',
     mediaUrl: '/exhibits/bagui-poster-3.jpg',
-    position: { x: 11.92, y: 2.2, z: -4.5 },
-    rotationY: -Math.PI / 2,
+    thetaDeg: 34,
     width: 1.7,
     height: 2.4,
     placeholderColor: '#3E6B8E',
@@ -103,8 +128,7 @@ const exhibits: Exhibit[] = [
     category: '品牌形象',
     type: 'video',
     mediaUrl: '/placeholders/exhibit-6.mp4',
-    position: { x: 11.92, y: 2.2, z: -1.5 },
-    rotationY: -Math.PI / 2,
+    thetaDeg: 4,
     width: 2.4,
     height: 1.6,
     placeholderColor: '#D19A2F',
@@ -118,8 +142,7 @@ const exhibits: Exhibit[] = [
     category: '海报设计',
     type: 'image',
     mediaUrl: '/exhibits/bagui-poster-4.jpg',
-    position: { x: 11.92, y: 2.2, z: 1.5 },
-    rotationY: -Math.PI / 2,
+    thetaDeg: -26,
     width: 1.7,
     height: 2.4,
     placeholderColor: '#5E8C5A',
@@ -133,8 +156,7 @@ const exhibits: Exhibit[] = [
     category: '包装设计',
     type: 'video',
     mediaUrl: '/placeholders/exhibit-8.mp4',
-    position: { x: 11.92, y: 2.2, z: 4.5 },
-    rotationY: -Math.PI / 2,
+    thetaDeg: -56,
     width: 2.4,
     height: 1.6,
     placeholderColor: '#E08E3C',
@@ -148,8 +170,7 @@ const exhibits: Exhibit[] = [
     category: '海报设计',
     type: 'image',
     mediaUrl: '/exhibits/bagui-poster-5.jpg',
-    position: { x: -5, y: 2.2, z: -7.92 },
-    rotationY: 0,
+    thetaDeg: -86,
     width: 1.7,
     height: 2.4,
     placeholderColor: '#3A7A6E',
@@ -163,8 +184,7 @@ const exhibits: Exhibit[] = [
     category: '海报设计',
     type: 'image',
     mediaUrl: '/exhibits/bagui-poster-6.jpg',
-    position: { x: 0, y: 2.2, z: -7.92 },
-    rotationY: 0,
+    thetaDeg: -116,
     width: 1.7,
     height: 2.4,
     placeholderColor: '#B5893C',
@@ -178,8 +198,7 @@ const exhibits: Exhibit[] = [
     category: '动画设计',
     type: 'video',
     mediaUrl: '/placeholders/exhibit-11.mp4',
-    position: { x: 5, y: 2.2, z: -7.92 },
-    rotationY: 0,
+    thetaDeg: -146,
     width: 2.4,
     height: 1.6,
     placeholderColor: '#7A3A28',
@@ -193,12 +212,21 @@ const exhibits: Exhibit[] = [
     category: '展厅前言',
     type: 'image',
     mediaUrl: '/placeholders/exhibit-12.jpg',
-    position: { x: 0, y: 2.2, z: 7.92 },
-    rotationY: Math.PI,
+    thetaDeg: -176,
     width: 3.0,
     height: 1.8,
     placeholderColor: '#2F5233',
   },
 ]
+
+const exhibits: Exhibit[] = seeds.map((seed) => {
+  const tall = seed.height > 2
+  const slot = wallSlot(seed.thetaDeg, tall)
+  return {
+    ...seed,
+    position: { x: slot.x, y: tall ? HALL.EYE_HEIGHT + 0.58 : HALL.EYE_HEIGHT + 0.15, z: slot.z },
+    rotationY: slot.rotationY,
+  }
+})
 
 export default exhibits

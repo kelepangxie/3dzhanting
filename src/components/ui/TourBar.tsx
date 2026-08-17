@@ -3,7 +3,7 @@ import { House } from 'lucide-react'
 import exhibits from '@/data/exhibits'
 import useExhibitStore from '@/store/useExhibitStore'
 import type { Exhibit } from '@/data/exhibits'
-import { ROOM } from '@/theme'
+import { HALL, clampToHall } from '@/theme'
 
 /**
  * 导览模式底部缩略条：点击缩略图，相机平滑飞到该展品面前；
@@ -17,7 +17,7 @@ export default function TourBar() {
 
   const overview = () => {
     setActiveId(null)
-    setTourTarget({ pos: [0, ROOM.EYE_HEIGHT, 6], look: [0, 2.0, -ROOM.DEPTH / 2] })
+    setTourTarget({ pos: [0, HALL.EYE_HEIGHT, 5.4], look: [0, 2.2, -4] })
   }
 
   const goTo = (exhibit: Exhibit) => {
@@ -26,12 +26,10 @@ export default function TourBar() {
       return
     }
     setActiveId(exhibit.id)
-    // 展品法线方向（画面朝向），站到画面正前方 2.8m 处
+    // 展品法线方向（画面朝向），站到画面正前方 2.8m 处，并钳制在椭圆展厅内
     const nx = Math.sin(exhibit.rotationY)
     const nz = Math.cos(exhibit.rotationY)
-    const margin = 0.6
-    const px = Math.max(-ROOM.WIDTH / 2 + margin, Math.min(ROOM.WIDTH / 2 - margin, exhibit.position.x + nx * 2.8))
-    const pz = Math.max(-ROOM.DEPTH / 2 + margin, Math.min(ROOM.DEPTH / 2 - margin, exhibit.position.z + nz * 2.8))
+    const [px, pz] = clampToHall(exhibit.position.x + nx * 2.8, exhibit.position.z + nz * 2.8)
     setTourTarget({
       pos: [px, 1.6, pz],
       look: [exhibit.position.x, exhibit.position.y, exhibit.position.z],

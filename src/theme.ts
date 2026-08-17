@@ -14,16 +14,64 @@ export const PASTORAL = {
   sky: '#EAF0E2', // 展厅雾色/环境
   sunlight: '#FFF6E0', // 暖阳光
   ink: '#3B4A3C', // 墨绿字色
+  grass: '#A9C79A', // 草坪绿（地面）
+  grassDark: '#8FB383', // 草坪深绿
 } as const
 
-// 展厅空间尺寸（米）—— 全局唯一定义，各组件从这里取
-export const ROOM = {
-  WIDTH: 24,
-  DEPTH: 16,
-  HEIGHT: 5,
-  WALL_MARGIN: 0.5,
+/**
+ * 椭圆曲面展厅 —— 参考大鱼云展「奇幻森林」洞穴式曲面空间：
+ * 连续弧形白墙 + 穹顶天窗 + 草绿地面，无一处直角。
+ */
+export const HALL = {
+  RX: 12.6, // 半长轴（X 方向，米）
+  RZ: 8.8, // 半短轴（Z 方向，米）
+  HEIGHT: 5.2, // 墙高
+  DOME: 1.7, // 穹顶拱起高度
+  OCULUS: 3.1, // 天窗半径（近似圆，按长短轴比例缩放）
+  ENTRANCE_SPAN: 28, // 入口缺口张角（度，朝 +Z 即 90°）
+  WALL_MARGIN: 0.95, // 行走离墙安全距离（径向）
   EYE_HEIGHT: 1.7,
 } as const
+
+// 兼容旧矩形定义（TourBar 等处仍引用尺寸概念）
+export const ROOM = {
+  WIDTH: HALL.RX * 2,
+  DEPTH: HALL.RZ * 2,
+  HEIGHT: HALL.HEIGHT,
+  WALL_MARGIN: HALL.WALL_MARGIN,
+  EYE_HEIGHT: HALL.EYE_HEIGHT,
+} as const
+
+/** 墙面有机起伏：叠加两个低频正弦，让椭圆像自然洞穴一样微微波浪 */
+export function wallWobble(theta: number): number {
+  return 1 + 0.028 * Math.sin(2 * theta + 1.2) + 0.016 * Math.sin(5 * theta + 0.4)
+}
+
+/**
+ * 椭圆墙上任意角度的点。thetaDeg：0°=+X，90°=+Z（入口朝向）；
+ * radialFactor 1≈贴墙，<1 向圆心收。
+ */
+export function hallPoint(thetaDeg: number, radialFactor = 1, y = 0): [number, number, number] {
+  const t = (thetaDeg * Math.PI) / 180
+  const w = wallWobble(t)
+  return [Math.cos(t) * HALL.RX * w * radialFactor, y, Math.sin(t) * HALL.RZ * w * radialFactor]
+}
+
+/** 贴墙平面朝向圆心所需的 rotationY */
+export function hallFacing(thetaDeg: number): number {
+  const t = (thetaDeg * Math.PI) / 180
+  return Math.atan2(-Math.cos(t), -Math.sin(t))
+}
+
+/** 把行走位置钳制在椭圆展厅内（含离墙安全距离） */
+export function clampToHall(x: number, z: number): [number, number] {
+  const maxX = HALL.RX - HALL.WALL_MARGIN
+  const maxZ = HALL.RZ - HALL.WALL_MARGIN
+  const k = (x / maxX) ** 2 + (z / maxZ) ** 2
+  if (k <= 1) return [x, z]
+  const s = 1 / Math.sqrt(k)
+  return [x * s, z * s]
+}
 
 // 展览信息
 export const EXHIBITION = {

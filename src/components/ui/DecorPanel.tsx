@@ -6,7 +6,7 @@ const TOGGLE_ITEMS = [
   { key: 'showBenches' as const, label: '原木长椅', desc: '休息座椅' },
   { key: 'showPriceTags' as const, label: '价签', desc: '展品价格标签' },
   { key: 'showRopeBarriers' as const, label: '麻绳护栏', desc: '隔离护栏' },
-  { key: 'showPlants' as const, label: '绿植竹丛', desc: '田园盆栽' },
+  { key: 'showPlants' as const, label: '田园森林', desc: '大树·蘑菇·灌木·萤火虫' },
   { key: 'showInfoStands' as const, label: '导览牌', desc: '木质指示牌' },
 ]
 
@@ -22,6 +22,7 @@ const WALL_COLORS = [
 ]
 
 const FLOOR_STYLES = [
+  { value: 'grass' as const, label: '草坪' },
   { value: 'wood' as const, label: '原木竹板' },
   { value: 'stone' as const, label: '青石板' },
   { value: 'rammed' as const, label: '夯土' },

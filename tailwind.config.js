@@ -14,6 +14,7 @@ export default {
         field: { DEFAULT: "#4C7A4E", dark: "#2F5233", light: "#7FAE7A" },
         wheat: { DEFAULT: "#C9A227", light: "#E9D9A8" },
         wood: { DEFAULT: "#8A6A4F", dark: "#6B4F3A", light: "#A98963" },
+        grass: { DEFAULT: "#A9C79A", dark: "#8FB383" },
       },
       fontFamily: {
         serif: ['"Noto Serif SC"', '"Songti SC"', '"STSong"', '"SimSun"', "Georgia", "serif"],
