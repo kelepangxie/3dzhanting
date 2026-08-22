@@ -22,12 +22,13 @@ interface PedestalModelConfig {
   geometry: 'torusKnot' | 'icosahedron' | 'dodecahedron' | 'octahedron'
 }
 
-// 四座展台呼应四季策展：春耕 / 夏耘 / 秋收 / 冬藏（沿椭圆内圈环形布置）
+// 四座展台呼应四季策展：春耕 / 夏耘 / 秋收 / 冬藏（内圈布置，避开展板视线轴）
+// 展板角度：118/168/222/272/326/20/62 —— 展台放在两展位之间
 const PEDESTAL_MODELS: PedestalModelConfig[] = [
-  { position: hallPoint(160, 0.52, 0), label: '春耕', color: '#7FAE7A', geometry: 'torusKnot' },
-  { position: hallPoint(20, 0.52, 0), label: '夏耘', color: '#4C7A4E', geometry: 'icosahedron' },
-  { position: hallPoint(-55, 0.52, 0), label: '秋收', color: '#C9A227', geometry: 'dodecahedron' },
-  { position: hallPoint(-125, 0.52, 0), label: '冬藏', color: '#6B4F3A', geometry: 'octahedron' },
+  { position: hallPoint(100, 0.52, 0), label: '春耕', color: '#7FAE7A', geometry: 'torusKnot' },
+  { position: hallPoint(215, 0.52, 0), label: '夏耘', color: '#4C7A4E', geometry: 'icosahedron' },
+  { position: hallPoint(318, 0.52, 0), label: '秋收', color: '#C9A227', geometry: 'dodecahedron' },
+  { position: hallPoint(55, 0.52, 0), label: '冬藏', color: '#6B4F3A', geometry: 'octahedron' },
 ]
 
 function createPedestalModelTexture(label: string, color: string) {
@@ -668,14 +669,14 @@ export default function Decorations({ exhibits }: { exhibits: Exhibit[] }) {
 
       {decorations.showBenches && (
         <>
-          {/* 长椅沿椭圆内圈，弧线朝向圆心 */}
-          <group position={hallPoint(60, 0.45, 0)} rotation={[0, hallFacing(60), 0]}>
+          {/* 长椅沿椭圆内圈，放在两展位之间的空档（避开 7 个展板角度） */}
+          <group position={hallPoint(195, 0.45, 0)} rotation={[0, hallFacing(195), 0]}>
             <Bench position={[0, 0, 0]} rotationY={Math.PI / 2} />
           </group>
-          <group position={hallPoint(-20, 0.45, 0)} rotation={[0, hallFacing(-20), 0]}>
+          <group position={hallPoint(300, 0.45, 0)} rotation={[0, hallFacing(300), 0]}>
             <Bench position={[0, 0, 0]} rotationY={Math.PI / 2} />
           </group>
-          <group position={hallPoint(-160, 0.45, 0)} rotation={[0, hallFacing(-160), 0]}>
+          <group position={hallPoint(40, 0.45, 0)} rotation={[0, hallFacing(40), 0]}>
             <Bench position={[0, 0, 0]} rotationY={Math.PI / 2} />
           </group>
         </>
@@ -703,32 +704,32 @@ export default function Decorations({ exhibits }: { exhibits: Exhibit[] }) {
 
       {decorations.showPlants && (
         <>
-          {/* 绿植竹丛贴着弧墙间隙点缀 */}
-          <PlantPot position={hallPoint(138, 0.93, 0)} variant={0} />
-          <PlantPot position={hallPoint(48, 0.93, 0)} variant={1} />
-          <PlantPot position={hallPoint(-38, 0.93, 0)} variant={0} />
-          <PlantPot position={hallPoint(-70, 0.93, 0)} variant={1} />
-          <PlantPot position={hallPoint(-100, 0.93, 0)} variant={0} />
-          <PlantPot position={hallPoint(-131, 0.93, 0)} variant={1} />
+          {/* 绿植竹丛贴弧墙间隙点缀（避开展板角度 118/168/222/272/326/20/62） */}
+          <PlantPot position={hallPoint(130, 0.93, 0)} variant={0} />
+          <PlantPot position={hallPoint(240, 0.93, 0)} variant={1} />
+          <PlantPot position={hallPoint(290, 0.93, 0)} variant={0} />
+          <PlantPot position={hallPoint(345, 0.93, 0)} variant={1} />
+          <PlantPot position={hallPoint(8, 0.93, 0)} variant={0} />
+          <PlantPot position={hallPoint(50, 0.93, 0)} variant={1} />
 
-          {/* 田园大树：嵌在展品间隙的弧墙边（167°/19°/-161° 均避开展板与长椅） */}
-          <BigTree position={hallPoint(167, 0.86, 0)} variant={1} shadow />
-          <BigTree position={hallPoint(19, 0.86, 0)} variant={2} shadow scale={0.92} />
-          <BigTree position={hallPoint(-161, 0.86, 0)} variant={3} shadow scale={1.08} />
+          {/* 田园大树：嵌在两展位正中间的弧墙边，树冠不遮展板 */}
+          <BigTree position={hallPoint(143, 0.86, 0)} variant={1} shadow />
+          <BigTree position={hallPoint(247, 0.86, 0)} variant={2} shadow scale={0.92} />
+          <BigTree position={hallPoint(356, 0.86, 0)} variant={3} shadow scale={1.08} />
 
-          {/* 童话蘑菇丛：树脚 + 门侧 + 展品间隙 */}
-          <MushroomCluster position={hallPoint(172, 0.78, 0)} />
-          <MushroomCluster position={hallPoint(14, 0.78, 0)} />
-          <MushroomCluster position={hallPoint(-156, 0.78, 0)} />
-          <MushroomCluster position={hallPoint(82, 0.8, 0)} />
-          <MushroomCluster position={hallPoint(42, 0.8, 0)} />
-          <MushroomCluster position={hallPoint(-78, 0.8, 0)} />
+          {/* 童话蘑菇丛：树脚 + 展位间空档 */}
+          <MushroomCluster position={hallPoint(146, 0.78, 0)} />
+          <MushroomCluster position={hallPoint(185, 0.8, 0)} />
+          <MushroomCluster position={hallPoint(250, 0.78, 0)} />
+          <MushroomCluster position={hallPoint(290, 0.8, 0)} />
+          <MushroomCluster position={hallPoint(345, 0.8, 0)} />
+          <MushroomCluster position={hallPoint(5, 0.8, 0)} />
 
-          {/* 灌木填补墙边空隙 */}
-          <Bush position={hallPoint(55, 0.88, 0)} />
-          <Bush position={hallPoint(-45, 0.88, 0)} scale={0.9} />
-          <Bush position={hallPoint(-105, 0.88, 0)} />
-          <Bush position={hallPoint(-135, 0.88, 0)} scale={1.1} />
+          {/* 灌木填补树脚与墙边空隙 */}
+          <Bush position={hallPoint(147, 0.88, 0)} />
+          <Bush position={hallPoint(251, 0.88, 0)} scale={0.9} />
+          <Bush position={hallPoint(2, 0.88, 0)} />
+          <Bush position={hallPoint(85, 0.88, 0)} scale={1.1} />
 
           {/* 田园小花点缀步道两侧 */}
           <FlowerPatch position={[2.4, 0, 4.6]} />
@@ -737,23 +738,23 @@ export default function Decorations({ exhibits }: { exhibits: Exhibit[] }) {
           <FlowerPatch position={[-1.6, 0, -0.8]} />
           <FlowerPatch position={[2.8, 0, -2.6]} />
 
-          {/* 树桩小凳：长椅旁与树脚 */}
-          <TreeStump position={[6.5, 0, -2.3]} />
-          <TreeStump position={[9.3, 0, 3.4]} rotationY={1.2} />
+          {/* 树桩小凳：长椅旁 */}
+          <TreeStump position={hallPoint(188, 0.42, 0)} />
+          <TreeStump position={hallPoint(44, 0.42, 0)} rotationY={1.2} />
 
-          {/* 萤火虫光点：树冠与门外小径附近漂浮 */}
-          <Fireflies center={hallPoint(167, 0.86, 2.2)} count={10} />
-          <Fireflies center={hallPoint(-161, 0.86, 2.2)} count={10} />
+          {/* 萤火虫光点：树冠附近漂浮 */}
+          <Fireflies center={hallPoint(143, 0.86, 2.2)} count={10} />
+          <Fireflies center={hallPoint(356, 0.86, 2.2)} count={10} />
           <Fireflies center={[0, 2, 12]} count={8} radius={2.6} />
         </>
       )}
 
       {decorations.showInfoStands && (
         <>
-          <group position={hallPoint(108, 0.8, 0)} rotation={[0, hallFacing(108), 0]}>
-            <InfoStand position={[0, 0, 0]} rotationY={0} title="展厅导览" body="春耕 · 夏耘 · 秋收 · 冬藏\n点击展品查看详情" />
+          <group position={hallPoint(135, 0.8, 0)} rotation={[0, hallFacing(135), 0]}>
+            <InfoStand position={[0, 0, 0]} rotationY={0} title="展厅导览" body="六大系列 · 四十余件作品\n点击展位整套轮播" />
           </group>
-          <group position={hallPoint(72, 0.8, 0)} rotation={[0, hallFacing(72), 0]}>
+          <group position={hallPoint(310, 0.8, 0)} rotation={[0, hallFacing(310), 0]}>
             <InfoStand position={[0, 0, 0]} rotationY={0} title="参观须知" body="请勿触摸展品\n轻声慢步 文明观展" />
           </group>
         </>
