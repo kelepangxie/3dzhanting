@@ -61,44 +61,52 @@ export default function TourBar() {
 
           <div className="w-px h-10 bg-field/10 shrink-0" />
 
-          {exhibits.map((exhibit) => {
+          {exhibits.map((exhibit, idx) => {
             const liked = likedExhibitIds.includes(exhibit.id)
+            // 系列变化时插入竖排系列标签分隔（35 件展品按系列分组浏览）
+            const showSeriesTag = idx === 0 || exhibits[idx - 1].series !== exhibit.series
             return (
-              <button
-                key={exhibit.id}
-                onClick={() => goTo(exhibit)}
-                className={`relative flex flex-col items-center gap-1 w-14 shrink-0 rounded-xl border p-1 transition-all ${
-                  activeId === exhibit.id
-                    ? 'border-wheat bg-wheat/15'
-                    : 'border-field/10 bg-rice hover:border-field/40'
-                }`}
-                title={`${exhibit.title} · ${exhibit.artist}`}
-              >
-                <div
-                  className="w-full h-8 rounded-md flex items-center justify-center overflow-hidden"
-                  style={{
-                    background: `linear-gradient(135deg, ${exhibit.placeholderColor}, ${exhibit.placeholderColor}bb)`,
-                  }}
-                >
-                  <span className="text-rice-light text-xs font-serif truncate px-0.5">{exhibit.title.slice(0, 2)}</span>
-                </div>
-                <span
-                  className={`text-[10px] leading-none font-serif truncate w-full text-center ${
-                    activeId === exhibit.id ? 'text-field-dark' : 'text-field/75'
+              <div key={exhibit.id} className="flex items-center shrink-0">
+                {showSeriesTag && (
+                  <span className="text-[9px] text-field/45 font-serif tracking-widest [writing-mode:vertical-rl] mx-1 select-none">
+                    {exhibit.series}
+                  </span>
+                )}
+                <button
+                  onClick={() => goTo(exhibit)}
+                  className={`relative flex flex-col items-center gap-1 w-14 shrink-0 rounded-xl border p-1 transition-all ${
+                    activeId === exhibit.id
+                      ? 'border-wheat bg-wheat/15'
+                      : 'border-field/10 bg-rice hover:border-field/40'
                   }`}
+                  title={`${exhibit.series} · ${exhibit.title} · ${exhibit.artist}`}
                 >
-                  {exhibit.title}
-                </span>
-                {/* 点赞数角标 */}
-                <span
-                  className={`absolute -top-1.5 -right-1.5 flex items-center gap-0.5 px-1.5 h-4 rounded-full text-[9px] leading-none shadow-sm border ${
-                    liked ? 'bg-wheat/20 border-wheat/50 text-wheat' : 'bg-rice-light/90 border-field/15 text-field/50'
-                  }`}
-                >
-                  <Heart style={{ width: 8, height: 8 }} fill={liked ? 'currentColor' : 'none'} />
-                  {(BASE_LIKES[exhibit.id] ?? 0) + (liked ? 1 : 0)}
-                </span>
-              </button>
+                  <div
+                    className="w-full h-8 rounded-md flex items-center justify-center overflow-hidden"
+                    style={{
+                      background: `linear-gradient(135deg, ${exhibit.placeholderColor}, ${exhibit.placeholderColor}bb)`,
+                    }}
+                  >
+                    <span className="text-rice-light text-xs font-serif truncate px-0.5">{exhibit.title.slice(0, 2)}</span>
+                  </div>
+                  <span
+                    className={`text-[10px] leading-none font-serif truncate w-full text-center ${
+                      activeId === exhibit.id ? 'text-field-dark' : 'text-field/75'
+                    }`}
+                  >
+                    {exhibit.title}
+                  </span>
+                  {/* 点赞数角标 */}
+                  <span
+                    className={`absolute -top-1.5 -right-1.5 flex items-center gap-0.5 px-1.5 h-4 rounded-full text-[9px] leading-none shadow-sm border ${
+                      liked ? 'bg-wheat/20 border-wheat/50 text-wheat' : 'bg-rice-light/90 border-field/15 text-field/50'
+                    }`}
+                  >
+                    <Heart style={{ width: 8, height: 8 }} fill={liked ? 'currentColor' : 'none'} />
+                    {(BASE_LIKES[exhibit.id] ?? 0) + (liked ? 1 : 0)}
+                  </span>
+                </button>
+              </div>
             )
           })}
           </div>
