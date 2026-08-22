@@ -26,7 +26,7 @@ function ProceduralEnv() {
       {/* 天空半球：上蓝下白的柔和渐变 */}
       <mesh scale={80}>
         <sphereGeometry args={[1, 24, 16]} />
-        <meshBasicMaterial color="#BDD9F2" side={1} />
+        <meshBasicMaterial color="#9CC4EE" side={1} />
       </mesh>
       {/* 地面（草地绿） */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -4, 0]} scale={60}>
@@ -49,13 +49,13 @@ export default function Scene() {
     <Canvas
       shadows="soft"
       camera={{ fov: 72, near: 0.1, far: 1000, position: [0, HALL.EYE_HEIGHT, 6.2] }}
-      gl={{ antialias: true, toneMapping: 3, toneMappingExposure: 1.15 }}
+      gl={{ antialias: true, toneMapping: 3, toneMappingExposure: 1.08 }}
       dpr={[1, isTouch ? 1.5 : 2]}
       style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
     >
-      {/* 蓝天白云：通透的晴天（低浊度=纯净蓝），透过天窗与门洞可见 */}
-      <Sky distance={800} sunPosition={SUN} turbidity={2.6} rayleigh={1.1} mieCoefficient={0.003} mieDirectionalG={0.85} />
-      <fog attach="fog" args={[PASTORAL.sky, 30, 110]} />
+      {/* 蓝天白云：湛蓝晴天（低浊度 + 高 Rayleigh 散射 = 饱和深蓝），透过天窗与门洞可见 */}
+      <Sky distance={800} sunPosition={SUN} turbidity={2.2} rayleigh={2.8} mieCoefficient={0.0035} mieDirectionalG={0.8} />
+      <fog attach="fog" args={[PASTORAL.sky, 32, 120]} />
 
       {/* IBL 环境反射（离线烘焙） */}
       <ProceduralEnv />
