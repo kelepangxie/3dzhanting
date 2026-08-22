@@ -87,7 +87,9 @@ export default function TourBar() {
                       background: `linear-gradient(135deg, ${exhibit.placeholderColor}, ${exhibit.placeholderColor}bb)`,
                     }}
                   >
-                    <span className="text-rice-light text-xs font-serif truncate px-0.5">{exhibit.title.slice(0, 2)}</span>
+                    <span className="text-rice-light text-xs font-serif truncate px-0.5">
+                      {exhibit.series === '序言' ? '序' : exhibit.series.replace('系列', '')}
+                    </span>
                   </div>
                   <span
                     className={`text-[10px] leading-none font-serif truncate w-full text-center ${
