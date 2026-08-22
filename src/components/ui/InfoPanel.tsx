@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import useExhibitStore from '@/store/useExhibitStore'
 import exhibits from '@/data/exhibits'
 import type { Exhibit } from '@/data/exhibits'
+import ReviewsSection from './ReviewsSection'
 import { X, User, Image, Video, FileText, ChevronLeft, ChevronRight } from 'lucide-react'
 
 /** 媒体区：优先加载真实图片/视频（public/placeholders/ 下同名文件），失败则显示宣纸风占位 */
@@ -145,6 +146,9 @@ export default function InfoPanel() {
             <div className="w-14 h-px bg-gradient-to-r from-wheat/70 to-transparent" />
 
             <p className="text-field-dark/70 leading-relaxed text-sm">{selectedExhibit.description}</p>
+
+            {/* 点赞 + 游客点评 */}
+            <ReviewsSection exhibitId={selectedExhibit.id} />
 
             <div className="bg-rice rounded-xl p-4 border border-field/10 space-y-3">
               <div className="flex items-center gap-2">

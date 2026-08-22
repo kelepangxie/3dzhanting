@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { House } from 'lucide-react'
+import { House, Heart } from 'lucide-react'
 import exhibits from '@/data/exhibits'
 import useExhibitStore from '@/store/useExhibitStore'
 import type { Exhibit } from '@/data/exhibits'
+import { BASE_LIKES } from '@/data/social'
 import { HALL, clampToHall } from '@/theme'
 
 /**
@@ -10,7 +11,7 @@ import { HALL, clampToHall } from '@/theme'
  * 再点一次当前缩略图，打开展品详情。
  */
 export default function TourBar() {
-  const { controlMode, setTourTarget, selectExhibit, selectedExhibit } = useExhibitStore()
+  const { controlMode, setTourTarget, selectExhibit, selectedExhibit, likedExhibitIds } = useExhibitStore()
   const [activeId, setActiveId] = useState<string | null>(null)
 
   if (controlMode !== 'tour' || selectedExhibit) return null
@@ -60,34 +61,46 @@ export default function TourBar() {
 
           <div className="w-px h-10 bg-field/10 shrink-0" />
 
-          {exhibits.map((exhibit) => (
-            <button
-              key={exhibit.id}
-              onClick={() => goTo(exhibit)}
-              className={`flex flex-col items-center gap-1 w-14 shrink-0 rounded-xl border p-1 transition-all ${
-                activeId === exhibit.id
-                  ? 'border-wheat bg-wheat/15'
-                  : 'border-field/10 bg-rice hover:border-field/40'
-              }`}
-              title={`${exhibit.title} · ${exhibit.artist}`}
-            >
-              <div
-                className="w-full h-8 rounded-md flex items-center justify-center overflow-hidden"
-                style={{
-                  background: `linear-gradient(135deg, ${exhibit.placeholderColor}, ${exhibit.placeholderColor}bb)`,
-                }}
-              >
-                <span className="text-rice-light text-xs font-serif truncate px-0.5">{exhibit.title.slice(0, 2)}</span>
-              </div>
-              <span
-                className={`text-[10px] leading-none font-serif truncate w-full text-center ${
-                  activeId === exhibit.id ? 'text-field-dark' : 'text-field/75'
+          {exhibits.map((exhibit) => {
+            const liked = likedExhibitIds.includes(exhibit.id)
+            return (
+              <button
+                key={exhibit.id}
+                onClick={() => goTo(exhibit)}
+                className={`relative flex flex-col items-center gap-1 w-14 shrink-0 rounded-xl border p-1 transition-all ${
+                  activeId === exhibit.id
+                    ? 'border-wheat bg-wheat/15'
+                    : 'border-field/10 bg-rice hover:border-field/40'
                 }`}
+                title={`${exhibit.title} · ${exhibit.artist}`}
               >
-                {exhibit.title}
-              </span>
-            </button>
-          ))}
+                <div
+                  className="w-full h-8 rounded-md flex items-center justify-center overflow-hidden"
+                  style={{
+                    background: `linear-gradient(135deg, ${exhibit.placeholderColor}, ${exhibit.placeholderColor}bb)`,
+                  }}
+                >
+                  <span className="text-rice-light text-xs font-serif truncate px-0.5">{exhibit.title.slice(0, 2)}</span>
+                </div>
+                <span
+                  className={`text-[10px] leading-none font-serif truncate w-full text-center ${
+                    activeId === exhibit.id ? 'text-field-dark' : 'text-field/75'
+                  }`}
+                >
+                  {exhibit.title}
+                </span>
+                {/* 点赞数角标 */}
+                <span
+                  className={`absolute -top-1.5 -right-1.5 flex items-center gap-0.5 px-1.5 h-4 rounded-full text-[9px] leading-none shadow-sm border ${
+                    liked ? 'bg-wheat/20 border-wheat/50 text-wheat' : 'bg-rice-light/90 border-field/15 text-field/50'
+                  }`}
+                >
+                  <Heart style={{ width: 8, height: 8 }} fill={liked ? 'currentColor' : 'none'} />
+                  {(BASE_LIKES[exhibit.id] ?? 0) + (liked ? 1 : 0)}
+                </span>
+              </button>
+            )
+          })}
           </div>
         </div>
       </div>
