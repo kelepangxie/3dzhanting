@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
+import { useFrame } from '@react-three/fiber'
 import { Instances, Instance } from '@react-three/drei'
 import useExhibitStore from '@/store/useExhibitStore'
 import type { FloorStyle } from '@/store/useExhibitStore'
@@ -119,17 +120,29 @@ function createFloorTexture(style: FloorStyle, repeat: [number, number] = [9, 6]
 
 function createWallTexture(wallColor: string) {
   const canvas = document.createElement('canvas')
-  canvas.width = 256
-  canvas.height = 256
+  canvas.width = 512
+  canvas.height = 512
   const ctx = canvas.getContext('2d')!
 
   ctx.fillStyle = wallColor
-  ctx.fillRect(0, 0, 256, 256)
+  ctx.fillRect(0, 0, 512, 512)
 
-  // 宣纸肌理：细微颗粒
-  for (let i = 0; i < 1400; i++) {
-    ctx.fillStyle = `rgba(107, 79, 58, ${Math.random() * 0.02})`
-    ctx.fillRect(Math.random() * 256, Math.random() * 256, 2, 2)
+  // 细腻宣纸肌理颗粒（放大画布后更精细）
+  for (let i = 0; i < 4200; i++) {
+    ctx.fillStyle = `rgba(107, 79, 58, ${Math.random() * 0.022})`
+    ctx.fillRect(Math.random() * 512, Math.random() * 512, 1.5, 1.5)
+  }
+  // 柔和的灰泥晕斑：让曲面墙有手工批荡的有机质感
+  for (let i = 0; i < 46; i++) {
+    const gx = Math.random() * 512
+    const gy = Math.random() * 512
+    const r = 30 + Math.random() * 80
+    const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, r)
+    const light = Math.random() > 0.5
+    grad.addColorStop(0, light ? 'rgba(255, 253, 246, 0.05)' : 'rgba(96, 84, 66, 0.035)')
+    grad.addColorStop(1, 'rgba(0,0,0,0)')
+    ctx.fillStyle = grad
+    ctx.fillRect(gx - r, gy - r, r * 2, r * 2)
   }
 
   const texture = new THREE.CanvasTexture(canvas)
@@ -248,7 +261,7 @@ function buildCurvedWallGeometry({ height, radialScale = 1, thetaStart = 0, thet
   return geo
 }
 
-/* ---------------- 穹顶（带椭圆天窗） ---------------- */
+/* ---------------- 穹顶（带椭圆天窗 + 肋木 + 金环收边） ---------------- */
 
 function buildDomeGeometry() {
   // 旋转曲面：从墙顶（平均半径）收拢到天窗内环，按长短轴比例整体缩放成椭圆
@@ -266,6 +279,35 @@ function buildDomeGeometry() {
   const geo = new THREE.LatheGeometry(points, 96)
   geo.scale(HALL.RX / avgR, 1, HALL.RZ / avgR)
   return geo
+}
+
+/** 穹顶上一根木肋：沿穹顶剖面曲线从墙顶走到天窗内环 */
+function buildDomeRibGeometry(angleDeg: number) {
+  const avgR = (HALL.RX + HALL.RZ) / 2
+  const sx = HALL.RX / avgR
+  const sz = HALL.RZ / avgR
+  const t = (angleDeg * Math.PI) / 180
+  const pts: THREE.Vector3[] = []
+  const steps = 14
+  for (let i = 0; i <= steps; i++) {
+    const v = i / steps
+    const ease = 1 - Math.cos((v * Math.PI) / 2)
+    const r = THREE.MathUtils.lerp(avgR, HALL.OCULUS, ease)
+    const y = HALL.HEIGHT + Math.sin((v * Math.PI) / 2) * HALL.DOME
+    pts.push(new THREE.Vector3(Math.cos(t) * r * sx, y, Math.sin(t) * r * sz))
+  }
+  return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.055, 8, false)
+}
+
+/** 沿椭圆周长的闭合曲线（供环形装饰条用） */
+function ellipseCurve(y: number, radialScale: number, segments = 64) {
+  const pts: THREE.Vector3[] = []
+  for (let i = 0; i < segments; i++) {
+    const t = (i / segments) * Math.PI * 2
+    const w = wallWobble(t)
+    pts.push(new THREE.Vector3(Math.cos(t) * HALL.RX * w * radialScale, y, Math.sin(t) * HALL.RZ * w * radialScale))
+  }
+  return new THREE.CatmullRomCurve3(pts, true)
 }
 
 /* ---------------- 房间主体 ---------------- */
@@ -295,36 +337,71 @@ export default function GalleryRoom() {
 
   const domeGeo = useMemo(() => buildDomeGeometry(), [])
 
-  const floorRoughness = decorations.floorStyle === 'wood' ? 0.55 : decorations.floorStyle === 'stone' ? 0.8 : 0.95
+  // 穹顶木肋（8 根，均匀放射）与天窗金环
+  const ribGeos = useMemo(
+    () => Array.from({ length: 8 }, (_, i) => buildDomeRibGeometry((i / 8) * 360 + 22.5)),
+    [],
+  )
+  const avgR = (HALL.RX + HALL.RZ) / 2
+  const oculusRingGeo = useMemo(() => {
+    const pts: THREE.Vector3[] = []
+    for (let i = 0; i < 48; i++) {
+      const t = (i / 48) * Math.PI * 2
+      pts.push(new THREE.Vector3(Math.cos(t) * HALL.OCULUS * (HALL.RX / avgR), HALL.HEIGHT + HALL.DOME - 0.03, Math.sin(t) * HALL.OCULUS * (HALL.RZ / avgR)))
+    }
+    return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true), 96, 0.07, 10, true)
+  }, [avgR])
+
+  // 墙裙顶部的原木压边条（勾勒 0.55m 高的弧形墙裙）
+  const wainscotRailGeo = useMemo(() => new THREE.TubeGeometry(ellipseCurve(0.55, 0.995), 160, 0.045, 8, true), [])
+
+  const floorRoughness = decorations.floorStyle === 'wood' ? 0.5 : decorations.floorStyle === 'stone' ? 0.75 : 0.95
   const floorMetalness = 0.02
 
   return (
     <group>
-      {/* 椭圆地面（比墙外扩一点，草坪延伸到墙外） */}
+      {/* 椭圆地面（比墙外扩一点，草坪延伸到墙外）；颜色纹理兼作凹凸贴图，草叶/板缝有立体感 */}
       <mesh key={`floor-${decorations.floorStyle}`} rotation={[-Math.PI / 2, 0, 0]} scale={[HALL.RX + 1.2, HALL.RZ + 1.2, 1]} receiveShadow>
         <circleGeometry args={[1, 96]} />
-        <meshStandardMaterial map={floorTexture} roughness={floorRoughness} metalness={floorMetalness} />
+        <meshStandardMaterial
+          map={floorTexture}
+          bumpMap={floorTexture}
+          bumpScale={decorations.floorStyle === 'grass' ? 0.12 : 0.06}
+          roughness={floorRoughness}
+          metalness={floorMetalness}
+        />
       </mesh>
 
-      {/* 洞穴式曲面主墙（白色哑光 + 宣纸肌理，顶部内收） */}
+      {/* 洞穴式曲面主墙（白色哑光 + 灰泥肌理 + 微凹凸，顶部内收） */}
       <mesh key={`wall-${decorations.wallColor}`} geometry={wallGeo} receiveShadow castShadow={false}>
-        <meshStandardMaterial map={wallTexture} roughness={0.92} metalness={0} side={THREE.DoubleSide} />
+        <meshStandardMaterial map={wallTexture} bumpMap={wallTexture} bumpScale={0.035} roughness={0.92} metalness={0} side={THREE.DoubleSide} />
       </mesh>
 
-      {/* 弧形草绿墙裙 */}
+      {/* 弧形草绿墙裙 + 原木压顶条 */}
       <mesh geometry={wainscotGeo}>
-        <meshStandardMaterial color={PASTORAL.fieldLight} roughness={0.85} metalness={0} side={THREE.DoubleSide} />
+        <meshStandardMaterial color={PASTORAL.fieldLight} roughness={0.8} metalness={0} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh geometry={wainscotRailGeo}>
+        <meshStandardMaterial color={PASTORAL.wood} roughness={0.5} metalness={0.05} />
       </mesh>
 
-      {/* 穹顶 + 中央椭圆天窗 */}
+      {/* 穹顶 + 8 根放射木肋 + 天窗麦穗金收边环 */}
       <mesh geometry={domeGeo}>
         <meshStandardMaterial color={decorations.wallColor} roughness={0.95} metalness={0} side={THREE.DoubleSide} />
+      </mesh>
+      {ribGeos.map((geo, i) => (
+        <mesh key={`rib-${i}`} geometry={geo}>
+          <meshStandardMaterial color={PASTORAL.woodDark} roughness={0.6} metalness={0.03} />
+        </mesh>
+      ))}
+      <mesh geometry={oculusRingGeo}>
+        <meshStandardMaterial color={PASTORAL.wheat} roughness={0.28} metalness={0.75} />
       </mesh>
 
       {/* 天窗：直接透出 Scene 里的真实天空 */}
       <Oculus />
 
-      {/* 户外世界：草坪、土路、森林（天空由 Scene 的 Sky 提供） */}
+      {/* 户外世界：草坪、土路、森林、白云（天空由 Scene 的 Sky 提供） */}
       <OutdoorWorld />
 
       {/* 悬挂横幅：入口内侧左右两幅，从穹顶垂下 */}
@@ -370,6 +447,94 @@ function Oculus() {
   )
 }
 
+/* ---------------- 卡通白云（蓝天白云的低多边形团云，缓慢漂移） ---------------- */
+
+function PuffCloud({
+  position,
+  scale = 1,
+  seed = 0,
+}: {
+  position: [number, number, number]
+  scale?: number
+  seed?: number
+}) {
+  // 确定性伪随机：每朵云形态稳定
+  const rand = (n: number) => {
+    const x = Math.sin(seed * 91.7 + n * 47.3) * 43758.5453
+    return x - Math.floor(x)
+  }
+  const puffs = useMemo(() => {
+    const list: { pos: [number, number, number]; r: number }[] = [
+      { pos: [0, 0, 0], r: 1 },
+      { pos: [1.15, -0.08, 0.12], r: 0.72 },
+      { pos: [-1.1, -0.05, -0.1], r: 0.78 },
+      { pos: [0.45, 0.34, -0.2], r: 0.62 },
+      { pos: [-0.5, 0.3, 0.18], r: 0.55 },
+    ]
+    return list.map((p, i) => ({
+      pos: [p.pos[0] + (rand(i) - 0.5) * 0.3, p.pos[1] + (rand(i + 7) - 0.5) * 0.12, p.pos[2] + (rand(i + 13) - 0.5) * 0.3] as [number, number, number],
+      r: p.r * (0.88 + rand(i + 21) * 0.24),
+    }))
+  }, [rand])
+
+  return (
+    <group position={position} scale={[scale, scale * 0.72, scale]}>
+      {puffs.map((p, i) => (
+        <mesh key={i} position={p.pos}>
+          <sphereGeometry args={[p.r, 12, 10]} />
+          <meshStandardMaterial color="#FFFFFF" roughness={1} metalness={0} emissive="#F4F8FF" emissiveIntensity={0.18} />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+/** 云层：绕展厅缓慢漂移的白云（useFrame 里整组旋转，开销极低） */
+function CloudLayer() {
+  const ref = useRef<THREE.Group>(null)
+  const skyDriftRef = useRef<THREE.Group>(null)
+  const clouds = useMemo(() => {
+    const rand = (n: number) => {
+      const x = Math.sin(n * 127.1 + 311.7) * 43758.5453
+      return x - Math.floor(x)
+    }
+    return Array.from({ length: 9 }, (_, i) => {
+      const a = rand(i * 3 + 1) * Math.PI * 2
+      const r = 26 + rand(i * 3 + 2) * 40
+      return {
+        pos: [Math.cos(a) * r, 15 + rand(i * 3 + 3) * 22, Math.sin(a) * r] as [number, number, number],
+        scale: 3.2 + rand(i * 3 + 4) * 3.4,
+        seed: i,
+      }
+    })
+  }, [])
+
+  useFrame(({ clock }, delta) => {
+    const t = clock.getElapsedTime()
+    if (ref.current) ref.current.rotation.y += delta * 0.0045
+    // 天窗上空的低空云：沿 X 往返漂移，保证抬头常见白云
+    if (skyDriftRef.current) {
+      skyDriftRef.current.position.x = Math.sin(t * 0.028) * 14
+      skyDriftRef.current.position.z = Math.cos(t * 0.021) * 8
+    }
+  })
+
+  return (
+    <group>
+      <group ref={ref}>
+        {clouds.map((c, i) => (
+          <PuffCloud key={i} position={c.pos} scale={c.scale} seed={c.seed} />
+        ))}
+      </group>
+      {/* 天窗常客：低空大朵白云，缓慢横越天窗上空 */}
+      <group ref={skyDriftRef}>
+        <PuffCloud position={[0, 30, 0]} scale={6} seed={11} />
+        <PuffCloud position={[9, 34, 4]} scale={3.6} seed={12} />
+      </group>
+    </group>
+  )
+}
+
 /* ---------------- 户外世界：天空下的草坪、土路与森林 ---------------- */
 
 function OutdoorWorld() {
@@ -397,6 +562,9 @@ function OutdoorWorld() {
 
   return (
     <group>
+      {/* 蓝天白云：缓慢漂移的白云层（透过天窗与门口可见） */}
+      <CloudLayer />
+
       {/* 外圈大草坪（延伸进雾里，与天空相接） */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]}>
         <circleGeometry args={[120, 72]} />

@@ -73,23 +73,31 @@ function PedestalWithModel({ config }: { config: PedestalModelConfig }) {
 
   return (
     <group position={config.position}>
-      {/* 梯田层叠底座：深绿 → 主绿 → 浅绿 */}
+      {/* 梯田层叠底座：深绿 → 主绿 → 浅绿（高分段圆柱 + 原木夹层压边） */}
       <mesh position={[0, 0.14, 0]} castShadow>
-        <cylinderGeometry args={[0.36, 0.4, 0.28, 8]} />
-        <meshStandardMaterial color={PASTORAL.fieldDark} roughness={0.7} metalness={0.02} />
+        <cylinderGeometry args={[0.36, 0.4, 0.28, 24]} />
+        <meshStandardMaterial color={PASTORAL.fieldDark} roughness={0.65} metalness={0.02} />
+      </mesh>
+      <mesh position={[0, 0.285, 0]}>
+        <torusGeometry args={[0.35, 0.018, 8, 32]} />
+        <meshStandardMaterial color={PASTORAL.wood} roughness={0.5} metalness={0.05} />
       </mesh>
       <mesh position={[0, 0.4, 0]} castShadow>
-        <cylinderGeometry args={[0.3, 0.34, 0.24, 8]} />
-        <meshStandardMaterial color={PASTORAL.field} roughness={0.7} metalness={0.02} />
+        <cylinderGeometry args={[0.3, 0.34, 0.24, 24]} />
+        <meshStandardMaterial color={PASTORAL.field} roughness={0.65} metalness={0.02} />
+      </mesh>
+      <mesh position={[0, 0.525, 0]}>
+        <torusGeometry args={[0.295, 0.016, 8, 32]} />
+        <meshStandardMaterial color={PASTORAL.wood} roughness={0.5} metalness={0.05} />
       </mesh>
       <mesh position={[0, 0.6, 0]} castShadow>
-        <cylinderGeometry args={[0.26, 0.28, 0.16, 8]} />
-        <meshStandardMaterial color={PASTORAL.fieldLight} roughness={0.7} metalness={0.02} />
+        <cylinderGeometry args={[0.26, 0.28, 0.16, 24]} />
+        <meshStandardMaterial color={PASTORAL.fieldLight} roughness={0.65} metalness={0.02} />
       </mesh>
-      {/* 原木台面 */}
+      {/* 原木台面（带微倒角感的高分圆柱） */}
       <mesh position={[0, 0.71, 0]} castShadow>
-        <cylinderGeometry args={[0.3, 0.28, 0.05, 8]} />
-        <meshStandardMaterial color={PASTORAL.woodLight} roughness={0.55} metalness={0.05} />
+        <cylinderGeometry args={[0.3, 0.285, 0.05, 24]} />
+        <meshStandardMaterial color={PASTORAL.woodLight} roughness={0.5} metalness={0.05} />
       </mesh>
 
       <group position={[0, 1.2, 0]}>
@@ -107,27 +115,49 @@ function PedestalWithModel({ config }: { config: PedestalModelConfig }) {
   )
 }
 
-/* ---------------- 原木长椅 ---------------- */
+/* ---------------- 原木长椅（板条椅面 + 板条靠背） ---------------- */
 
 function Bench({ position, rotationY = 0 }: { position: [number, number, number]; rotationY?: number }) {
+  const seatY = 0.46
   return (
     <group position={position} rotation={[0, rotationY, 0]}>
-      <mesh position={[0, 0.45, 0]} castShadow>
-        <boxGeometry args={[2.0, 0.08, 0.6]} />
-        <meshStandardMaterial color="#9C7A55" roughness={0.65} metalness={0.03} />
-      </mesh>
-      <mesh position={[0, 0.72, -0.26]} castShadow>
-        <boxGeometry args={[2.0, 0.5, 0.06]} />
-        <meshStandardMaterial color="#9C7A55" roughness={0.65} metalness={0.03} />
-      </mesh>
+      {/* 板条椅面：5 根圆角木条，条间留缝 */}
+      {[-0.21, -0.105, 0, 0.105, 0.21].map((z) => (
+        <mesh key={z} position={[0, seatY, z]} castShadow>
+          <boxGeometry args={[2.0, 0.045, 0.082]} />
+          <meshStandardMaterial color="#9C7A55" roughness={0.6} metalness={0.03} />
+        </mesh>
+      ))}
+      {/* 椅面下纵向衬木 */}
+      {[-0.72, 0.72].map((x) => (
+        <mesh key={x} position={[x, seatY - 0.05, 0]} castShadow>
+          <boxGeometry args={[0.09, 0.06, 0.56]} />
+          <meshStandardMaterial color={PASTORAL.woodDark} roughness={0.55} metalness={0.03} />
+        </mesh>
+      ))}
+      {/* 板条靠背：3 根略后倾 */}
+      {[0.06, 0.16, 0.26].map((z, i) => (
+        <mesh key={z} position={[0, 0.62 + i * 0.115, -0.245 - z]} rotation={[0.16, 0, 0]} castShadow>
+          <boxGeometry args={[2.0, 0.05, 0.07]} />
+          <meshStandardMaterial color="#9C7A55" roughness={0.6} metalness={0.03} />
+        </mesh>
+      ))}
+      {/* 靠背立柱（与后腿一体） */}
+      {[-0.85, 0.85].map((x) => (
+        <mesh key={`bp${x}`} position={[x, 0.48, -0.27]} rotation={[0.16, 0, 0]} castShadow>
+          <boxGeometry args={[0.07, 0.95, 0.07]} />
+          <meshStandardMaterial color={PASTORAL.woodDark} roughness={0.5} metalness={0.05} />
+        </mesh>
+      ))}
+      {/* 前腿（微外撇） */}
       {[
         [-0.85, 0.2],
         [0.85, 0.2],
         [-0.85, -0.2],
         [0.85, -0.2],
       ].map(([x, z], i) => (
-        <mesh key={i} position={[x, 0.22, z]}>
-          <boxGeometry args={[0.07, 0.44, 0.07]} />
+        <mesh key={i} position={[x * 1.04, 0.22, z]} rotation={[0, 0, x > 0 ? -0.05 : 0.05]}>
+          <cylinderGeometry args={[0.034, 0.042, 0.44, 10]} />
           <meshStandardMaterial color={PASTORAL.woodDark} roughness={0.5} metalness={0.05} />
         </mesh>
       ))}
@@ -217,28 +247,39 @@ function RopeBarrier({ position, rotationY = 0, width = 2 }: { position: [number
 
 function PlantPot({ position, variant = 0 }: { position: [number, number, number]; variant?: number }) {
   if (variant % 2 === 0) {
-    // 陶盆绿植
+    // 陶盆绿植：带沿口的花盆 + 多团簇叶球
     return (
       <group position={position}>
         <mesh position={[0, 0.2, 0]} castShadow>
-          <cylinderGeometry args={[0.22, 0.18, 0.4, 8]} />
-          <meshStandardMaterial color="#B5703F" roughness={0.8} metalness={0.02} />
+          <cylinderGeometry args={[0.22, 0.17, 0.4, 16]} />
+          <meshStandardMaterial color="#B5703F" roughness={0.75} metalness={0.02} />
         </mesh>
-        <mesh position={[0, 0.42, 0]}>
-          <cylinderGeometry args={[0.24, 0.22, 0.04, 8]} />
-          <meshStandardMaterial color="#9A5C33" roughness={0.7} metalness={0.02} />
+        {/* 盆口沿边 */}
+        <mesh position={[0, 0.4, 0]}>
+          <torusGeometry args={[0.215, 0.028, 8, 24]} />
+          <meshStandardMaterial color="#9A5C33" roughness={0.65} metalness={0.02} />
         </mesh>
-        <mesh position={[0, 0.62, 0]} castShadow>
-          <sphereGeometry args={[0.3, 8, 8]} />
-          <meshStandardMaterial color="#3A6B3A" roughness={0.85} metalness={0} />
+        {/* 土面 */}
+        <mesh position={[0, 0.405, 0]}>
+          <circleGeometry args={[0.19, 16]} />
+          <meshStandardMaterial color="#5C4632" roughness={1} />
         </mesh>
-        <mesh position={[0.12, 0.78, 0.1]} castShadow>
-          <sphereGeometry args={[0.2, 8, 8]} />
-          <meshStandardMaterial color="#4C7A4E" roughness={0.85} metalness={0} />
+        {/* 簇叶：主团 + 三侧团，色阶递进 */}
+        <mesh position={[0, 0.64, 0]} castShadow>
+          <sphereGeometry args={[0.3, 14, 12]} />
+          <meshStandardMaterial color="#3A6B3A" roughness={0.8} metalness={0} />
         </mesh>
-        <mesh position={[-0.13, 0.72, -0.08]} castShadow>
-          <sphereGeometry args={[0.18, 8, 8]} />
-          <meshStandardMaterial color="#356037" roughness={0.85} metalness={0} />
+        <mesh position={[0.13, 0.79, 0.1]} castShadow>
+          <sphereGeometry args={[0.2, 12, 10]} />
+          <meshStandardMaterial color="#4C7A4E" roughness={0.8} metalness={0} />
+        </mesh>
+        <mesh position={[-0.14, 0.73, -0.08]} castShadow>
+          <sphereGeometry args={[0.18, 12, 10]} />
+          <meshStandardMaterial color="#356037" roughness={0.8} metalness={0} />
+        </mesh>
+        <mesh position={[0.02, 0.88, -0.14]} castShadow>
+          <sphereGeometry args={[0.13, 12, 10]} />
+          <meshStandardMaterial color="#7FAE7A" roughness={0.8} metalness={0} />
         </mesh>
       </group>
     )
@@ -247,8 +288,12 @@ function PlantPot({ position, variant = 0 }: { position: [number, number, number
   return (
     <group position={position}>
       <mesh position={[0, 0.14, 0]} castShadow>
-        <cylinderGeometry args={[0.24, 0.2, 0.28, 8]} />
-        <meshStandardMaterial color="#B5703F" roughness={0.8} metalness={0.02} />
+        <cylinderGeometry args={[0.24, 0.19, 0.28, 16]} />
+        <meshStandardMaterial color="#B5703F" roughness={0.75} metalness={0.02} />
+      </mesh>
+      <mesh position={[0, 0.28, 0]}>
+        <torusGeometry args={[0.235, 0.028, 8, 24]} />
+        <meshStandardMaterial color="#9A5C33" roughness={0.65} metalness={0.02} />
       </mesh>
       {[
         { x: 0, h: 1.7, tilt: 0 },
@@ -257,13 +302,13 @@ function PlantPot({ position, variant = 0 }: { position: [number, number, number
       ].map((stalk, i) => (
         <group key={i} position={[stalk.x, 0.28, 0]} rotation={[0, 0, stalk.tilt]}>
           <mesh position={[0, stalk.h / 2, 0]} castShadow>
-            <cylinderGeometry args={[0.025, 0.03, stalk.h, 6]} />
-            <meshStandardMaterial color="#6B8E4E" roughness={0.7} metalness={0} />
+            <cylinderGeometry args={[0.025, 0.03, stalk.h, 8]} />
+            <meshStandardMaterial color="#6B8E4E" roughness={0.65} metalness={0} />
           </mesh>
           {[0.9, 1.2, 1.5].slice(0, i + 2).map((y, j) => (
             <mesh key={j} position={[0.09 * (j % 2 === 0 ? 1 : -1), Math.min(y, stalk.h - 0.15), 0]} rotation={[0, 0, -0.9 * (j % 2 === 0 ? 1 : -1)]}>
-              <coneGeometry args={[0.05, 0.42, 5]} />
-              <meshStandardMaterial color="#4C7A4E" roughness={0.8} metalness={0} />
+              <coneGeometry args={[0.05, 0.42, 6]} />
+              <meshStandardMaterial color="#4C7A4E" roughness={0.75} metalness={0} />
             </mesh>
           ))}
         </group>

@@ -26,7 +26,7 @@ export interface Exhibit {
  * 再对展板跨度内的墙面（含顶部内收）数值采样，求出保证整幅画框
  * 完整悬浮于墙前的最小离墙间距。
  */
-const FRAME_BACK = 0.062 // 画框背板凸出画面的深度
+const FRAME_BACK = 0.075 // 画框背板凸出画面的深度（含背板+卡纸厚度）
 const FRAME_GAP = 0.05 // 画框背板与墙面的最小间隙
 
 function wallSlot(thetaDeg: number, tall: boolean, halfWidth: number, halfHeight: number) {

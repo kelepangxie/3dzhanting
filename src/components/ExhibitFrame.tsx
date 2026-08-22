@@ -148,7 +148,6 @@ export default function ExhibitFrame({ exhibit }: { exhibit: Exhibit }) {
 
   const frameWidth = exhibit.width + 0.12
   const frameHeight = exhibit.height + 0.12
-  const frameDepth = 0.06
 
   // 可交互：指针锁定漫游 / 导览模式 / 触屏
   const canInteract = isLocked || controlMode === 'tour' || isTouch
@@ -200,21 +199,53 @@ export default function ExhibitFrame({ exhibit }: { exhibit: Exhibit }) {
         />
       </mesh>
 
-      {/* 原木画框（背板，整体位于画面之后，形成凸出画框边） */}
-      <mesh position={[0, 0, -0.031]}>
-        <boxGeometry args={[frameWidth, frameHeight, frameDepth]} />
-        <meshStandardMaterial
-          color={hovered ? PASTORAL.wheat : PASTORAL.wood}
-          roughness={0.55}
-          metalness={0.08}
-        />
+      {/* 画框层次：实木背板 → 白卡纸（passe-partout）→ 画面 → 四边凸出框条 */}
+      <mesh position={[0, 0, -0.045]}>
+        <boxGeometry args={[frameWidth, frameHeight, 0.05]} />
+        <meshStandardMaterial color={PASTORAL.woodDark} roughness={0.65} metalness={0.03} />
+      </mesh>
+      <mesh position={[0, 0, -0.014]}>
+        <boxGeometry args={[exhibit.width + 0.2, exhibit.height + 0.2, 0.024]} />
+        <meshStandardMaterial color="#FAF7EE" roughness={0.9} metalness={0} />
       </mesh>
 
-      {/* 宣纸标签牌 */}
-      <mesh position={[0, -(exhibit.height / 2) - 0.28, 0.01]}>
-        <planeGeometry args={[1.3, 0.32]} />
-        <meshStandardMaterial map={labelTexture} roughness={0.85} transparent />
-      </mesh>
+      {/* 原木框条（上下左右，凸出画面形成立体边框；hover 泛麦穗金） */}
+      {(() => {
+        const bar = 0.095
+        const barDepth = 0.075
+        const outerW = exhibit.width + 0.2 + bar * 2
+        const mat = hovered ? PASTORAL.wheat : PASTORAL.wood
+        return (
+          <group position={[0, 0, 0.024]}>
+            <mesh position={[0, exhibit.height / 2 + 0.1 + bar / 2, 0]} castShadow>
+              <boxGeometry args={[outerW, bar, barDepth]} />
+              <meshStandardMaterial color={mat} roughness={0.5} metalness={0.08} />
+            </mesh>
+            <mesh position={[0, -(exhibit.height / 2 + 0.1 + bar / 2), 0]} castShadow>
+              <boxGeometry args={[outerW, bar, barDepth]} />
+              <meshStandardMaterial color={mat} roughness={0.5} metalness={0.08} />
+            </mesh>
+            {[-1, 1].map((side) => (
+              <mesh key={side} position={[side * (exhibit.width / 2 + 0.1 + bar / 2), 0, 0]} castShadow>
+                <boxGeometry args={[bar, exhibit.height + 0.2, barDepth]} />
+                <meshStandardMaterial color={mat} roughness={0.5} metalness={0.08} />
+              </mesh>
+            ))}
+          </group>
+        )
+      })()}
+
+      {/* 宣纸标签牌（原木底板 + 纸面） */}
+      <group position={[0, -(exhibit.height / 2) - 0.42, 0]}>
+        <mesh position={[0, 0, -0.012]}>
+          <boxGeometry args={[1.36, 0.38, 0.024]} />
+          <meshStandardMaterial color={PASTORAL.wood} roughness={0.6} metalness={0.03} />
+        </mesh>
+        <mesh position={[0, 0, 0.006]}>
+          <planeGeometry args={[1.28, 0.31]} />
+          <meshStandardMaterial map={labelTexture} roughness={0.85} transparent />
+        </mesh>
+      </group>
 
       {hovered && canInteract && (
         <Html

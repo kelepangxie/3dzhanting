@@ -9,4 +9,11 @@ export default defineConfig({
     react(),
     tsconfigPaths()
   ],
+  // 静态资源目录不需要参与 HMR 监听；Windows 下批量拷贝图片会触发
+  // fs.watch EBUSY 直接把 dev server 打挂，忽略之（改动 src 仍正常热更）
+  server: {
+    watch: {
+      ignored: ['**/public/**'],
+    },
+  },
 })

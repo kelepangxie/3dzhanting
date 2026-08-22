@@ -11,7 +11,7 @@ export const PASTORAL = {
   wood: '#8A6A4F', // 原木棕
   woodDark: '#6B4F3A', // 深木
   woodLight: '#A98963', // 浅木
-  sky: '#EAF0E2', // 展厅雾色/环境
+  sky: '#D9EAF8', // 展厅雾色/环境（淡天蓝，与蓝天白云衔接）
   sunlight: '#FFF6E0', // 暖阳光
   ink: '#3B4A3C', // 墨绿字色
   grass: '#A9C79A', // 草坪绿（地面）
