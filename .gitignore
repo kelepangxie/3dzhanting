@@ -3,3 +3,6 @@ dist
 *.local
 .DS_Store
 npm-debug.log*
+
+# Windows 快捷方式（仅本地打开素材文件夹用，无需上传到 Pages）
+*.lnk
