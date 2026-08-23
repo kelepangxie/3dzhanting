@@ -114,7 +114,7 @@ export const EXHIBITION = {
 // 广西农业职业技术大学 办学方针文案（表述取自学校官网公开信息）
 export const SCHOOL = {
   name: '广西农业职业技术大学',
-  college: '人文与艺术学院 · 视觉传达设计',
+  college: '人文与艺术学院 · 美术专业',
   mottoTop: '厚德明志',
   mottoBottom: '勤耕笃行',
   mottoFull: '厚德明志 · 勤耕笃行',
