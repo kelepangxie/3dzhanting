@@ -225,13 +225,25 @@ const seeds: Seed[] = [
   },
 ]
 
+/**
+ * 部署基址。vite `base: './'` 时该值为 './'。
+ * 展品图 /exhibits/... 原本是站点「根路径」绝对写法，本地开发可直读；
+ * 但部署到 GitHub Pages 子路径 /3dzhanting/ 后，/exhibits/... 会跳到站点
+ * 根目录导致 404。这里统一给展品图加基址前缀，转为相对/根相对路径。
+ */
+const ASSET_BASE: string = import.meta.env.BASE_URL || '/'
+const toAssetURL = (p: string): string =>
+  /^([a-z][a-z0-9+.-]*:)?\/\//i.test(p) || p.startsWith('data:') ? p : ASSET_BASE + p.replace(/^\//, '')
+
 const exhibits: Exhibit[] = seeds.map((seed) => {
-  const cover = seed.images[0]
+  const images = seed.images.map((img) => ({ ...img, url: toAssetURL(img.url) }))
+  const cover = images[0]
   const height = seed.width / cover.ratio
   const tall = height > 1.7
   const slot = wallSlot(seed.thetaDeg, tall, seed.width / 2, height / 2)
   return {
     ...seed,
+    images,
     type: 'image' as const,
     mediaUrl: cover.url,
     position: { x: slot.x, y: tall ? HALL.EYE_HEIGHT + 0.45 : HALL.EYE_HEIGHT + 0.15, z: slot.z },
